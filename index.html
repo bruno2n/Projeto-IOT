@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+	<title>Aula Firebase</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" 
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+
+
+
+    <style>
+        /* Cria o Estilo da página*/
+        body {
+            font-family:arial;
+            margin:0;
+            background:#f1f3f6;
+        }
+        table {
+            border:1px solid silver;
+            margin:auto;
+        }
+        table th {
+            background:#039be5;
+            color:white;
+            text-align:center;
+            padding:10px;
+        }
+        table tr td {
+            border:1px solid silver;
+            text-align:center;
+            padding:10px;
+            font-size:18px;
+            background-image: linear-gradient(white, #e9e9e9);
+        }
+
+        .table tr td {
+            font-size:12px;
+        }
+
+        #title {
+            width:100%;
+            margin:auto;
+            text-align:center;
+            margin-bottom:20px;
+            font-size:20px;
+            background:#2c3849;
+            padding-top:10px;
+            padding-bottom:10px;
+            color:white;
+            font-weight:bold;
+        }
+
+        .div-form {
+            background:white;
+            margin:0 auto;
+            border:1px solid silver;
+            border-radius:3px;
+            padding-top:10px;
+            margin-bottom:5px;
+        }
+
+        .ativo {
+            color:#009900;
+        }
+
+        .desativado {
+            color:#666666;
+        }
+    </style>
+</head>
+<body>
+
+	<div id="container">
+
+        <div id="title">Titulo da minha página</div>
+
+        <div class="col-md-8 div-form">
+            <div class="form-group">
+                <label for="exampleInputEmail1"><i class="fas fa-users"></i> Nome</label>
+                <input type="text" class="form-control" id="nome" placeholder="Digite um Nome">
+            </div>
+
+            <div class="form-group">
+                <label for="exampleInputEmail1"><i class="fas fa-envelope-square"></i> E-mail</label>
+                <input type="email" class="form-control" id="email" placeholder="Digite um E-mail">
+            </div>
+
+            <div class="form-group">
+                <label for="exampleInputEmail1"><i class="fas fa-tags"></i> TAG RFID</label>
+                <input id="td_tag" type="text"  class="form-control" disabled="true">
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-success pull-right" id="cadastrar"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+        
+        <div class="col-md-8 div-form">
+            <!-- Tabela HTML-->
+    		<table id="my_table" class="table">
+    			<tr>
+    				<th>Nome</th>
+    				<th>E-mail</th>
+                    <th>TAG</th>
+                    <th>Status</th>
+    			</tr>
+    		</table>
+        </div>
+		
+	</div>
+
+<!--Chama a lib Jquery-->
+<script src="js/jquery.js"></script>
+
+<!-- Chama a lib do Firebase-->
+<script src="https://www.gstatic.com/firebasejs/5.4.0/firebase.js"></script>
+
+<script>
+  /*Substituir pelas configurações do seu banco. Copia da sua página original e cola no lugar deste código.*/
+  var config = {
+      apiKey: "AIzaSyAfb8FtUPVr_lPDi1x35Hc0sS6uhRiCVkw",
+      authDomain: "esp82666-e0f1d.firebaseapp.com",
+      databaseURL: "https://esp82666-e0f1d.firebaseio.com",
+      projectId: "esp82666-e0f1d",
+      storageBucket: "esp82666-e0f1d.appspot.com",
+      messagingSenderId: "1019469467657"
+  };
+  firebase.initializeApp(config);
+
+   var sensorRef = firebase.database().ref("RFID");
+       sensorRef.on("value", function(snapshot) {
+            var teste = snapshot.val();
+            $("#td_tag").val(teste.Tag);
+        });
+      
+
+    /*Realiza o Cadastro no Firebase*/
+    var cadastrar = function(data) {
+        var db = firebase.database().ref("CADASTRO");
+            db.push(data);
+    }
+    
+    /*Recupera o Click do botão salvar e passa os valores dos campos para a função Cadastrar*/
+    $("#cadastrar").click(function() {
+        var data = {
+            "Nome": $("#nome").val(),
+            "Email": $("#email").val(),
+            "Tag": $("#td_tag").val(),
+            "RfidStatus": 1
+        }
+
+        cadastrar(data);
+        
+        /*Limpa a Tabela HTML*/
+        $("#my_table .tr-data").remove();
+        alert("Cadastro realizado com Sucesso!");
+
+        /*Chama a função para repopular a tabela HTML depois do cadastro*/
+        popularTabelaHtml();
+    });
+    
+    /*Popula a tabela HTML*/
+    var popularTabelaHtml = function() {
+        var db = firebase.database().ref("CADASTRO");
+            db.on("value", function(snapshot) {
+                var trData = "";
+
+                snapshot.forEach(function(item) {
+                    trData += "<tr class='tr-data'>";
+                    trData += "<td>" + item.val().Nome  + "</td>";
+                    trData += "<td>" + item.val().Email + "</td>";
+                    trData += "<td>" + item.val().Tag  + "</td>";
+
+                    if (item.val().RfidStatus == 1) {
+                        trData += "<td><span class='ativo fas fa-check-circle'></span></td>";
+                    } else if (item.val().RfidStatus == 0) {
+                        trData += "<td><span class='desativado fas fa-check-circle'></span></td>";
+                    }
+
+                    trData += "</tr>";
+                    
+                });
+
+            $("#my_table").append(trData);
+        });
+    }
+
+    popularTabelaHtml();
+
+</script>
+
+</body>
+</html>
